@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>3D VIEW</title>
+<style>
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#f4f4f4}
+#viewer{position:fixed;inset:0;width:100%;height:100%}
+#title{position:fixed;top:14px;left:18px;z-index:5;font:600 15px Arial,sans-serif;color:#333;background:rgba(255,255,255,.82);padding:7px 10px;border-radius:6px;pointer-events:none}
+#status{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;font:14px Arial,sans-serif;color:#555;text-align:center;background:rgba(255,255,255,.94);padding:11px 15px;border-radius:7px;max-width:80vw}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/online-3d-viewer@0.18.0/build/engine/o3dv.min.js"></script>
+</head>
+<body>
+<div id="viewer"></div><div id="title">3D VIEW</div><div id="status">3D 모델 불러오는 중…</div>
+<script>
+window.addEventListener('load',function(){
+ const status=document.getElementById('status'),title=document.getElementById('title'),parent=document.getElementById('viewer');
+ const params=new URLSearchParams(location.search);
+ let model=params.get('model');
+ if(!model){status.innerHTML='모델 파일명이 없습니다.<br><br>주소 뒤에 <b>?model=파일명.3ds</b> 를 붙여주세요.';return;}
+ model=model.replace(/\\/g,'/');
+ if(model.startsWith('/')||model.includes('..')||/^https?:\/\//i.test(model)||!/\.3ds$/i.test(model)){status.textContent='올바른 3DS 파일명을 지정해 주세요.';return;}
+ const fileName=model.split('/').pop(),displayName=fileName.replace(/\.3ds$/i,'');
+ document.title=displayName+' - 3D VIEW';title.textContent=displayName;
+ if(typeof OV==='undefined'){status.textContent='3D 뷰어 엔진을 불러오지 못했습니다.';return;}
+ const viewer=new OV.EmbeddedViewer(parent,{
+  backgroundColor:new OV.RGBAColor(244,244,244,255),
+  defaultColor:new OV.RGBColor(225,225,225),
+  edgeSettings:new OV.EdgeSettings(true,new OV.RGBColor(45,45,45),1),
+  onModelLoaded:function(){status.style.display='none';},
+  onModelLoadFailed:function(){status.innerHTML='<b>'+fileName+'</b><br>파일을 불러오지 못했습니다.<br><br>GitHub의 파일명과 주소를 확인해 주세요.';}
+ });
+ viewer.LoadModelFromUrlList(['./'+model]);
+ window.addEventListener('resize',function(){viewer.Resize();});
+});
+</script>
+</body>
+</html>
