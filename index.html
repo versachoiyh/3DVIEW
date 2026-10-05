@@ -69,7 +69,7 @@ h1{margin:0 0 8px;font-size:30px}
     const allowed = /\.(3ds|jpg|jpeg|png|bmp|gif|tga)$/i;
     const files = items
       .filter(x => x.type === 'file' && allowed.test(x.name))
-      .map(x => x.download_url + '?v=' + Date.now());
+      .map(x => x.download_url);
 
     const model = files.find(x => /\.3ds$/i.test(x));
     if (!model) throw new Error('이 폴더에 3DS 파일이 없습니다.');
