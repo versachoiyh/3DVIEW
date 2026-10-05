@@ -2,50 +2,93 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>3D VIEW</title>
 <style>
-html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#ffffff}
-#viewer{position:fixed;inset:0;width:100%;height:100%;background:#ffffff}
-#title{position:fixed;top:14px;left:18px;z-index:5;font:600 15px Arial,sans-serif;color:#333;background:rgba(255,255,255,.82);padding:7px 10px;border-radius:6px;pointer-events:none}
-#status{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;font:14px Arial,sans-serif;color:#555;text-align:center;background:rgba(255,255,255,.94);padding:11px 15px;border-radius:7px;max-width:80vw}
+html,body{margin:0;width:100%;height:100%;font-family:Arial,"Noto Sans KR",sans-serif;background:#fff;color:#222}
+#home{box-sizing:border-box;max-width:900px;margin:0 auto;padding:48px 24px}
+h1{margin:0 0 8px;font-size:30px}
+.sub{color:#777;margin-bottom:30px}
+.card{display:block;border:1px solid #ddd;border-radius:12px;padding:18px 20px;margin:12px 0;text-decoration:none;color:#222;background:#fff}
+.card:hover{background:#f7f7f7}
+.card b{display:block;font-size:18px;margin-bottom:5px}
+.card span{font-size:14px;color:#777}
+#viewerPage{display:none;width:100%;height:100%}
+#bar{height:54px;box-sizing:border-box;padding:0 18px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #e5e5e5;background:#fff}
+#back{font-size:14px;text-decoration:none;color:#333}
+#title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#viewer{width:100%;height:calc(100% - 54px);background:#fff}
+#msg{padding:30px;color:#555}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/online-3d-viewer@0.18.0/build/engine/o3dv.min.js"></script>
 </head>
 <body>
-<div id="viewer"></div><div id="title">3D VIEW</div><div id="status">3D 모델 불러오는 중…</div>
+
+<div id="home">
+  <h1>3D VIEW</h1>
+  <div class="sub">현장을 선택하세요.</div>
+
+  <!-- 새 현장은 아래 한 줄을 복사해서 folder / title 만 바꾸면 됩니다. -->
+  <a class="card" href="?folder=BANPO_PRUGIO&title=반포푸르지오 목공">
+    <b>반포푸르지오 목공</b>
+    <span>3D 작업지시서</span>
+  </a>
+</div>
+
+<div id="viewerPage">
+  <div id="bar">
+    <a id="back" href="./">← 현장 목록</a>
+    <div id="title">3D VIEW</div>
+  </div>
+  <div id="viewer"></div>
+</div>
+
 <script>
-window.addEventListener('load',function(){
- const status=document.getElementById('status'),title=document.getElementById('title'),parent=document.getElementById('viewer');
- const params=new URLSearchParams(location.search);
- let model=params.get('model');
- const customTitle=params.get('title');
- if(!model){status.innerHTML='모델 파일명이 없습니다.<br><br>주소 뒤에 <b>?model=파일명.3ds</b> 를 붙여주세요.';return;}
- model=model.replace(/\\/g,'/');
- if(model.startsWith('/')||model.includes('..')||/^https?:\/\//i.test(model)||!/\.3ds$/i.test(model)){status.textContent='올바른 3DS 파일명을 지정해 주세요.';return;}
- const fileName=model.split('/').pop(),displayName=fileName.replace(/\.3ds$/i,'');
- const shownTitle=(customTitle&&customTitle.trim())?customTitle.trim():displayName;
- document.title=shownTitle+' - 3D VIEW';
- title.textContent=shownTitle;
- if(typeof OV==='undefined'){status.textContent='3D 뷰어 엔진을 불러오지 못했습니다.';return;}
- const viewer=new OV.EmbeddedViewer(parent,{
-  backgroundColor:new OV.RGBAColor(255,255,255,255),
-  defaultColor:new OV.RGBColor(225,225,225),
-  edgeSettings:new OV.EdgeSettings(true,new OV.RGBColor(45,45,45),1),
-  onModelLoaded:function(){status.style.display='none';},
-  onModelLoadFailed:function(){status.innerHTML='<b>'+fileName+'</b><br>파일을 불러오지 못했습니다.<br><br>GitHub의 파일명과 주소를 확인해 주세요.';}
- });
- const modelFiles=[
-   './'+model,
-   './IMG_0608.jpg',
-   './IMG_0112.JPG',
-   './IMG_0114.JPG',
-   './IMG_0122.JPG',
-   './IMG_0130.JPG'
-  ];
-  viewer.LoadModelFromUrlList(modelFiles);
- window.addEventListener('resize',function(){viewer.Resize();});
-});
+(async function () {
+  const p = new URLSearchParams(location.search);
+  const folder = p.get('folder');
+  const customTitle = p.get('title') || '3D VIEW';
+
+  if (!folder) return;
+
+  document.getElementById('home').style.display = 'none';
+  document.getElementById('viewerPage').style.display = 'block';
+  document.getElementById('title').textContent = customTitle;
+  document.title = customTitle;
+
+  const owner = 'versachoiyh';
+  const repo = '3DVIEW';
+  const branch = 'main';
+  const api = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(folder)}?ref=${branch}`;
+
+  try {
+    const res = await fetch(api);
+    if (!res.ok) throw new Error('폴더를 찾을 수 없습니다.');
+    const items = await res.json();
+
+    const allowed = /\.(3ds|jpg|jpeg|png|bmp|gif|tga)$/i;
+    const files = items
+      .filter(x => x.type === 'file' && allowed.test(x.name))
+      .map(x => x.download_url + '?v=' + Date.now());
+
+    const model = files.find(x => /\.3ds$/i.test(x));
+    if (!model) throw new Error('이 폴더에 3DS 파일이 없습니다.');
+
+    // 모델 + 같은 현장 폴더의 텍스처 파일을 모두 함께 전달
+    const ordered = [model, ...files.filter(x => x !== model)];
+
+    const viewer = new OV.EmbeddedViewer(document.getElementById('viewer'), {
+      backgroundColor: new OV.RGBAColor(255,255,255,255),
+      defaultColor: new OV.RGBColor(225,225,225),
+      edgeSettings: new OV.EdgeSettings(true,new OV.RGBColor(45,45,45),1)
+    });
+
+    viewer.LoadModelFromUrlList(ordered);
+  } catch (e) {
+    document.getElementById('viewer').innerHTML =
+      `<div id="msg"><b>불러오지 못했습니다.</b><br><br>${e.message}<br><br>GitHub의 ${folder} 폴더 안에 3DS와 텍스처 파일이 있는지 확인하세요.</div>`;
+  }
+})();
 </script>
 </body>
 </html>
