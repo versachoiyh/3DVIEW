@@ -35,7 +35,15 @@ window.addEventListener('load',function(){
   onModelLoaded:function(){status.style.display='none';},
   onModelLoadFailed:function(){status.innerHTML='<b>'+fileName+'</b><br>파일을 불러오지 못했습니다.<br><br>GitHub의 파일명과 주소를 확인해 주세요.';}
  });
- viewer.LoadModelFromUrlList(['./'+model]);
+ const modelFiles=[
+   './'+model,
+   './IMG_0608.jpg',
+   './IMG_0112.JPG',
+   './IMG_0114.JPG',
+   './IMG_0122.JPG',
+   './IMG_0130.JPG'
+  ];
+  viewer.LoadModelFromUrlList(modelFiles);
  window.addEventListener('resize',function(){viewer.Resize();});
 });
 </script>
