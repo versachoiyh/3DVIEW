@@ -19,11 +19,14 @@ window.addEventListener('load',function(){
  const status=document.getElementById('status'),title=document.getElementById('title'),parent=document.getElementById('viewer');
  const params=new URLSearchParams(location.search);
  let model=params.get('model');
+ const customTitle=params.get('title');
  if(!model){status.innerHTML='모델 파일명이 없습니다.<br><br>주소 뒤에 <b>?model=파일명.3ds</b> 를 붙여주세요.';return;}
  model=model.replace(/\\/g,'/');
  if(model.startsWith('/')||model.includes('..')||/^https?:\/\//i.test(model)||!/\.3ds$/i.test(model)){status.textContent='올바른 3DS 파일명을 지정해 주세요.';return;}
  const fileName=model.split('/').pop(),displayName=fileName.replace(/\.3ds$/i,'');
- document.title=displayName+' - 3D VIEW';title.textContent=displayName;
+ const shownTitle=(customTitle&&customTitle.trim())?customTitle.trim():displayName;
+ document.title=shownTitle+' - 3D VIEW';
+ title.textContent=shownTitle;
  if(typeof OV==='undefined'){status.textContent='3D 뷰어 엔진을 불러오지 못했습니다.';return;}
  const viewer=new OV.EmbeddedViewer(parent,{
   backgroundColor:new OV.RGBAColor(255,255,255,255),
