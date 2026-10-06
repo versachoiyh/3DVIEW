@@ -67,9 +67,11 @@ h1{margin:0 0 8px;font-size:30px}
     if (!res.ok) throw new Error('폴더를 찾을 수 없습니다.');
     const items = await res.json();
 
-    const allowed = /\.(3ds|jpg|jpeg|png|bmp|gif|tga)$/i;
-    const files = items
-      .filter(x => x.type === 'file' && allowed.test(x.name))
+    // 텍스처 이미지만 별도로 수집합니다.
+    // 다른 3DS 파일은 절대로 함께 로드하지 않습니다.
+    const textureAllowed = /\.(jpg|jpeg|png|bmp|gif|tga)$/i;
+    const textureFiles = items
+      .filter(x => x.type === 'file' && textureAllowed.test(x.name))
       .map(x => x.download_url);
 
     const modelItems = items.filter(x => x.type === 'file' && /\.3ds$/i.test(x.name));
@@ -89,7 +91,9 @@ h1{margin:0 0 8px;font-size:30px}
     // 스마트폰은 메모리 부족으로 Visualizing 단계에서 멈추는 것을 방지하기 위해
     // 3DS 모델만 먼저 로드합니다. PC/iPad는 기존처럼 텍스처 이미지까지 함께 로드합니다.
     const isPhone = /Android.*Mobile|iPhone|iPod|Windows Phone/i.test(navigator.userAgent);
-    const ordered = isPhone ? [model] : [model, ...files.filter(x => x !== model)];
+    // 선택된 3DS 딱 하나만 로드합니다.
+    // PC/iPad에서는 같은 폴더의 이미지 텍스처만 추가합니다.
+    const ordered = isPhone ? [model] : [model, ...textureFiles];
 
     const viewer = new OV.EmbeddedViewer(document.getElementById('viewer'), {
       backgroundColor: new OV.RGBAColor(255,255,255,255),
