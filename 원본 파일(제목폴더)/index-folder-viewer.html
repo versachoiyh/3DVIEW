@@ -88,9 +88,12 @@ h1{margin:0 0 8px;font-size:30px}
     if (!modelItem) throw new Error('이 폴더에 3DS 파일이 없습니다.');
     const model = modelItem.download_url;
 
-    // 선택한 3DS 한 개와 같은 현장 폴더의 이미지 텍스처를 항상 함께 로드합니다.
-    // PC / iPad / iPhone / Android 모두 동일하게 이미지가 표시됩니다.
-    const ordered = [model, ...textureFiles];
+    // 스마트폰은 메모리 부족으로 Visualizing 단계에서 멈추는 것을 방지하기 위해
+    // 3DS 모델만 먼저 로드합니다. PC/iPad는 기존처럼 텍스처 이미지까지 함께 로드합니다.
+    const isPhone = /Android.*Mobile|iPhone|iPod|Windows Phone/i.test(navigator.userAgent);
+    // 선택된 3DS 딱 하나만 로드합니다.
+    // PC/iPad에서는 같은 폴더의 이미지 텍스처만 추가합니다.
+    const ordered = isPhone ? [model] : [model, ...textureFiles];
 
     const viewer = new OV.EmbeddedViewer(document.getElementById('viewer'), {
       backgroundColor: new OV.RGBAColor(255,255,255,255),
